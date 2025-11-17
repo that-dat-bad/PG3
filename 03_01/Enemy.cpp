@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 void(Enemy::* Enemy::stateFunc[])() {
-		& Enemy::Approach,
+	&Enemy::Approach,
 		& Enemy::Attack,
 		& Enemy::Retreat
 };
@@ -15,13 +15,11 @@ void Enemy::Update()
 
 	char userInput = 0;
 
-	if (scanf_s("%c", &userInput, 1) == 1)
-	{
+	if (scanf_s("%c", &userInput, 1) == 1) {
 		// 次のフェーズに進む
 		phase_ = (phase_ + 1) % 3;
 
-		if (userInput != '\n')
-		{
+		if (userInput != '\n') {
 			int c;
 			while ((c = getchar()) != '\n' && c != EOF);
 		}
