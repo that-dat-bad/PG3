@@ -1,6 +1,6 @@
-#include<iostream>
-#include<list>
-#include<string>
+#include <iostream>
+#include <list>
+#include <string>
 
 int main() {
 	std::list<std::string> YamanoteLine = { "Tokyo","Kanda","Akihabara","Okachimachi","Ueno",
