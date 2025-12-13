@@ -1,8 +1,8 @@
-#include<iostream>
+#include <stdio.h>
 
 int main() {
 	char character[] = "ソ";
-	printf("%s", character);
+	printf("%s\n", character);
 
 	return 0;
 
