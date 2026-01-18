@@ -1,52 +1,71 @@
 #include "Novice.h"
-	
-const char kWindowTitle[] = "LE2B_14_タカナガ_ダイキ_";
+#include "Player.h"
+#include "Command.h"
 
-// Windowsアプリでのエントリーポイント(main関数)
+class InputHandle {
+public:
+	Command* HandleInput(const char keys[]) {
+		if (keys[DIK_RIGHT]||keys[DIK_D]) {
+			return buttonD_;
+		}
+		if (keys[DIK_LEFT]||keys[DIK_A]) {
+			return buttonA_;
+		}
+		return nullptr;
+	}
+
+	InputHandle() {
+		buttonD_ = new MoveRightCommand();
+		buttonA_ = new MoveLeftCommand();
+	}
+
+	~InputHandle() {
+		delete buttonD_;
+		delete buttonA_;
+	}
+
+private:
+	Command* buttonD_;
+	Command* buttonA_;
+};
+
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+	Novice::Initialize("Command Pattern Test", 1280, 720);
 
-	// ライブラリの初期化
-	Novice::Initialize(kWindowTitle, 1280, 720);
+	char keys[256] = { 0 };
+	char preKeys[256] = { 0 };
 
-	// キー入力結果を受け取る箱
-	char keys[256] = {0};
-	char preKeys[256] = {0};
+	Player player;
+	InputHandle inputHandler; // 入力管理クラス
 
-	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
-		// フレームの開始
 		Novice::BeginFrame();
-
-		// キー入力を受け取る
 		memcpy(preKeys, keys, 256);
 		Novice::GetHitKeyStateAll(keys);
 
-		///
-		/// ↓更新処理ここから
-		///
+		/// ↓更新処理
 
-		///
-		/// ↑更新処理ここまで
-		///
 
-		///
-		/// ↓描画処理ここから
-		///
+		Command* command = inputHandler.HandleInput(keys);
 
-		///
-		/// ↑描画処理ここまで
-		///
 
-		// フレームの終了
-		Novice::EndFrame();
-
-		// ESCキーが押されたらループを抜ける
-		if (preKeys[DIK_ESCAPE] == 0 && keys[DIK_ESCAPE] != 0) {
-			break;
+		if (command) {
+			command->Execute(player);
 		}
+
+
+		player.Update();
+
+		/// ↑更新処理
+
+		/// ↓描画処理
+		player.Draw();
+		/// ↑描画処理
+
+		Novice::EndFrame();
+		if (preKeys[DIK_ESCAPE] == 0 && keys[DIK_ESCAPE] != 0) break;
 	}
 
-	// ライブラリの終了
 	Novice::Finalize();
 	return 0;
 }
