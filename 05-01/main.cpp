@@ -1,5 +1,5 @@
-#include <Novice.h>
-
+#include "Novice.h"
+	
 const char kWindowTitle[] = "LE2B_14_タカナガ_ダイキ_";
 
 // Windowsアプリでのエントリーポイント(main関数)

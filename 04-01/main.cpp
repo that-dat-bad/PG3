@@ -1,4 +1,5 @@
 #include <Novice.h>
+#include "SceneManager.h"
 
 const char kWindowTitle[] = "LE2B_14_タカナガ_ダイキ_PG3_04-01";
 
@@ -8,40 +9,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// ライブラリの初期化
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
-	// キー入力結果を受け取る箱
-	char keys[256] = {0};
-	char preKeys[256] = {0};
+	// シーン管理者を生成（コンストラクタ内で初期シーンを生成して Initialize を呼ぶ）
+	SceneManager sceneManager;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
 		Novice::BeginFrame();
 
-		// キー入力を受け取る
-		memcpy(preKeys, keys, 256);
-		Novice::GetHitKeyStateAll(keys);
+		// 更新（SceneManager 内で IScene::PollKeys が呼ばれ、各シーンの Update が実行される）
+		sceneManager.Update();
 
-		///
-		/// ↓更新処理ここから
-		///
-
-		///
-		/// ↑更新処理ここまで
-		///
-
-		///
-		/// ↓描画処理ここから
-		///
-
-		///
-		/// ↑描画処理ここまで
-		///
+		// 描画
+		sceneManager.Draw();
 
 		// フレームの終了
 		Novice::EndFrame();
 
-		// ESCキーが押されたらループを抜ける
-		if (preKeys[DIK_ESCAPE] == 0 && keys[DIK_ESCAPE] != 0) {
+		// ESCキーがトリガーされたらループを抜ける
+		if (IScene::IsKeyTriggered(DIK_ESCAPE)) {
 			break;
 		}
 	}
