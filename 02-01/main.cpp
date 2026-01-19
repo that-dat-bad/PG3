@@ -17,6 +17,7 @@ int main() {
 	std::cout << Min<float>(IntNum, FloatNum) << std::endl;
 	std::cout << Min<double>(IntNum, DoubleNum) << std::endl;
 	std::cout << Min<double>(FloatNum, DoubleNum) << std::endl;
+	std::cout << Min<int>(FloatNum, IntNum) << std::endl;
 	return 0;
 
 }
