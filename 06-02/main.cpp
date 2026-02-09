@@ -79,13 +79,21 @@ int main() {
 		dummy << "1,1,1,1,1\n";
 	}
 
-	std::cout << "Loading map in background..." << std::endl;
+	std::cout << "Starting background load..." << std::endl;
 
 	std::thread loaderThread(LoadMapCSV, "level_data.csv");
 
+	while (!g_IsLoaded) {
+		std::cout << "." << std::flush;
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+	}
+
+	std::cout << "\nLoad Complete! Joining thread." << std::endl;
+
+	// データを使用する直前でjoinを呼び出し
 	loaderThread.join();
 
-	std::cout << "\n Load Complete! Switching to Game Screen." << std::endl;
+	std::cout << "Switching to Game Screen." << std::endl;
 
 	RenderMap();
 
