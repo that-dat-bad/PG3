@@ -1,4 +1,4 @@
-#include <iostream>
+#include <Novice.h>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -8,17 +8,24 @@
 #include <chrono>
 #include <mutex>
 
-
+// グローバル変数
 std::vector<std::vector<int>> g_MapData;
 std::mutex g_Mtx;
 std::atomic<bool> g_IsLoaded(false);
 
+// 定数
+const int kWindowWidth = 1280;
+const int kWindowHeight = 720;
+const int kTileSize = 64;
+
+// CSV読み込み関数
 void LoadMapCSV(const std::string& filename) {
 	std::this_thread::sleep_for(std::chrono::seconds(2));
 
 	std::ifstream file(filename);
 	if (!file.is_open()) {
-		std::cerr << "Failed to open file." << std::endl;
+		// 開けなかった場合でも読み込み完了
+		g_IsLoaded.store(true);
 		return;
 	}
 
@@ -33,14 +40,12 @@ void LoadMapCSV(const std::string& filename) {
 		while (std::getline(ss, cell, ',')) {
 			try {
 				row.push_back(std::stoi(cell));
-			}
-			catch (...) {
+			} catch (...) {
 				row.push_back(0);
 			}
 		}
 		tempMap.push_back(row);
 	}
-
 	{
 		std::lock_guard<std::mutex> lock(g_Mtx);
 		g_MapData = tempMap;
@@ -50,26 +55,8 @@ void LoadMapCSV(const std::string& filename) {
 	g_IsLoaded.store(true);
 }
 
-// マップチップを描画
-void RenderMap() {
-	// データの読み取り
-	std::lock_guard<std::mutex> lock(g_Mtx);
-
-	std::cout << "\n--- MAP RENDERING ---\n";
-	for (const auto& row : g_MapData) {
-		for (int cell : row) {
-			switch (cell) {
-			case 0: std::cout << ". "; break; // 床
-			case 1: std::cout << "##"; break; // 壁
-			case 2: std::cout << "P "; break; // プレイヤー
-			default: std::cout << "??"; break;
-			}
-		}
-		std::cout << std::endl;
-	}
-}
-
-int main() {
+// Windowsアプリでのエントリーポイント(main関数)
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	{
 		std::ofstream dummy("level_data.csv");
 		dummy << "1,1,1,1,1\n";
@@ -79,23 +66,74 @@ int main() {
 		dummy << "1,1,1,1,1\n";
 	}
 
-	std::cout << "Starting background load..." << std::endl;
+	Novice::Initialize("06-02", kWindowWidth, kWindowHeight);
 
+	// スレッド起動：ロード開始
 	std::thread loaderThread(LoadMapCSV, "level_data.csv");
 
-	while (!g_IsLoaded) {
-		std::cout << "." << std::flush;
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+	bool isThreadJoined = false;
+
+	// メインループ
+	while (Novice::ProcessMessage() == 0) {
+		Novice::BeginFrame();
+
+		if (g_IsLoaded.load()) {
+			// ロード完了後の処理
+
+			// スレッドのjoin
+			if (!isThreadJoined) {
+				if (loaderThread.joinable()) {
+					loaderThread.join();
+				}
+				isThreadJoined = true;
+			}
+
+			// マップ描画
+			int y = 0;
+			for (const auto& row : g_MapData) {
+				int x = 0;
+				for (int cell : row) {
+					int outputX = x * kTileSize;
+					int outputY = y * kTileSize;
+					
+					switch (cell) {
+					case 0: // 床
+						Novice::DrawBox(outputX, outputY, kTileSize, kTileSize, 0.0f, 0x444444FF, kFillModeSolid);
+						break;
+					case 1: // 壁
+						Novice::DrawBox(outputX, outputY, kTileSize, kTileSize, 0.0f, WHITE, kFillModeSolid);
+						break;
+					case 2: // プレイヤー
+						Novice::DrawBox(outputX, outputY, kTileSize, kTileSize, 0.0f, RED, kFillModeSolid);
+						break;
+					}
+					x++;
+				}
+				y++;
+			}
+
+			Novice::ScreenPrintf(10, 10, "Load Complete. Press ESC to Exit.");
+
+		} else {
+			// ロード中の処理
+			Novice::ScreenPrintf(600, 350, "Loading...");
+			static int frameTimer = 0;
+			frameTimer++;
+			int barWidth = (frameTimer % 60) * 2;
+			Novice::DrawBox(600, 370, barWidth, 10, 0.0f, BLUE, kFillModeSolid);
+		}
+
+		Novice::EndFrame();
+
+		if (Novice::CheckHitKey(DIK_ESCAPE)) {
+			break;
+		}
 	}
 
-	std::cout << "\nLoad Complete! Joining thread." << std::endl;
+	if (!isThreadJoined && loaderThread.joinable()) {
+		loaderThread.join();
+	}
 
-	// データを使用する直前でjoinを呼び出し
-	loaderThread.join();
-
-	std::cout << "Switching to Game Screen." << std::endl;
-
-	RenderMap();
-
+	Novice::Finalize();
 	return 0;
 }
